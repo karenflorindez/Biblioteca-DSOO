@@ -1,0 +1,98 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace Aentregar
+{
+    public partial class Login : Form
+    {
+        public Login()
+        {
+            InitializeComponent();
+        }
+
+        private void label1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnLogin_Click(object sender, EventArgs e)
+        {
+            // FA1: Validación de campos vacíos
+            if (string.IsNullOrWhiteSpace(txtUsr.Text) || string.IsNullOrWhiteSpace(txtPwd.Text))
+            {
+                MessageBox.Show("Debe ingresar usuario y contraseña.", "Error de Login", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            DATOS.Usuarios dato = new DATOS.Usuarios();
+            DataTable tablaLogin = new DataTable();
+
+            try
+            {
+                // 1. Validar credenciales
+                tablaLogin = dato.Log_Usu(txtUsr.Text, txtPwd.Text);
+
+                if (tablaLogin.Rows.Count > 0)
+                {
+                    // --- Credenciales VÁLIDAS ---
+                    DataRow userRow = tablaLogin.Rows[0];
+
+                    bool userIsActive = Convert.ToBoolean(userRow["Activo"]);
+                    string userRole = userRow["RolUsu"].ToString();
+                    bool isFirstAccess = Convert.ToBoolean(userRow["primer_acceso"]);
+                    string userName = userRow["NombreUsu"].ToString();
+
+                    // EX3: Validar el estado de la cuenta
+                    if (userIsActive)
+                    {
+                        // EX1: Resetear intentos fallidos
+                        dato.ResetearIntentosFallidos(txtUsr.Text);
+
+                        // FA2: Verificar si es primer acceso
+                        if (isFirstAccess)
+                        {
+                            MessageBox.Show("FA2: Es su primer acceso. Debe cambiar su contraseña obligatoriamente.", "Primer Acceso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            // Aquí iría la llamada a un formulario de cambio de clave
+                        }
+
+                        MessageBox.Show($"Bienvenido, {userName}. Redirigiendo según su rol ({userRole}).", "Acceso Exitoso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        // Aquí iría la lógica para abrir el menú principal
+                    }
+                    else
+                    {
+                        // EX3: Cuenta SUSPENDIDA/INACTIVA
+                        MessageBox.Show("EX3: Su cuenta se encuentra inactiva o suspendida temporalmente. Contacte al administrador del sistema para habilitarla.", "Acceso Denegado", MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                    }
+                }
+                else
+                {
+                    // --- Credenciales INVÁLIDAS (EX1/EX2) ---
+                    string suspensionMessage = dato.IncrementarIntentoFallido(txtUsr.Text);
+
+                    if (!string.IsNullOrEmpty(suspensionMessage))
+                    {
+                        // EX2: Mensaje de suspensión
+                        MessageBox.Show(suspensionMessage, "Cuenta Suspendida", MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                    }
+                    else
+                    {
+                        // EX1: Mensaje de error simple, quedan intentos restantes
+                        MessageBox.Show("Usuario o contraseña incorrectos. Quedan intentos restantes.", "Acceso Denegado", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // 🛑 Muestra el error de la conexión/SP
+                MessageBox.Show("Error crítico: Fallo al intentar conectar o ejecutar la operación con la base de datos. Mensaje: " + ex.Message, "Error Crítico", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+    }
+}
