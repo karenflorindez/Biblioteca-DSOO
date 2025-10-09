@@ -1,0 +1,48 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using MySql.Data.MySqlClient;
+
+namespace Aentregar.DATOS
+{
+    internal class conexion
+    {
+        private static conexion Con = null;
+        private MySqlConnection Conexion_ = new MySqlConnection();
+
+        private readonly string Servidor = "localhost";
+        private readonly string BaseDeDatos = "bbddclubdeportivo";
+        private readonly string Usuario = "root";
+        private readonly string Clave = "1234";
+
+        private conexion()
+        {
+            try
+            {
+                string cadenaConexion = $"Server={Servidor};Database={BaseDeDatos};Uid={Usuario};Pwd={Clave};";
+                Conexion_ = new MySqlConnection(cadenaConexion);
+            }
+            catch (Exception ex)
+            {
+                // Muestra un mensaje de error crítico si la cadena de conexión es incorrecta
+                MessageBox.Show("Fallo en la configuración de la conexión (Conexion.cs): " + ex.Message, "Error Crítico de Conexión", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        public MySqlConnection CrearConcexion()
+        {
+            return Conexion_;
+        }
+
+        public static conexion getInstancia()
+        {
+            if (Con == null)
+            {
+                Con = new conexion();
+            }
+            return Con;
+        }
+    }
+}
