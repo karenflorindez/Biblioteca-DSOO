@@ -1,0 +1,131 @@
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using MySql.Data.MySqlClient;
+
+
+namespace Aentregar.DATOS
+{
+    public class Usuarios
+    {
+        public DataTable Log_Usu(string L_Usu, string P_Usu)
+        {
+            MySqlDataReader resultado;
+            DataTable tabla = new DataTable();
+            MySqlConnection sqlCon = new MySqlConnection();
+            try
+            {
+                sqlCon = conexion.getInstancia().CrearConcexion();
+                MySqlCommand comando = new MySqlCommand("IngresoLogin", sqlCon);
+                comando.CommandType = CommandType.StoredProcedure;
+
+                comando.Parameters.Add("p_nombre_usu", MySqlDbType.VarChar).Value = L_Usu;
+                comando.Parameters.Add("p_pass_usu", MySqlDbType.VarChar).Value = P_Usu;
+
+                sqlCon.Open();
+                resultado = comando.ExecuteReader();
+                tabla.Load(resultado);
+                return tabla;
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+            finally
+            {
+                if (sqlCon.State == ConnectionState.Open)
+                { sqlCon.Close(); }
+            }
+        }
+
+        public void ResetearIntentosFallidos(string L_Usu)
+        {
+            MySqlConnection sqlCon = new MySqlConnection();
+            try
+            {
+                sqlCon = conexion.getInstancia().CrearConcexion();
+                MySqlCommand comando = new MySqlCommand("ResetearIntentos", sqlCon);
+                comando.CommandType = CommandType.StoredProcedure;
+
+                comando.Parameters.Add("p_usuario", MySqlDbType.VarChar).Value = L_Usu;
+
+                sqlCon.Open();
+                comando.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+            finally
+            {
+                if (sqlCon.State == ConnectionState.Open)
+                { sqlCon.Close(); }
+            }
+        }
+
+        public string IncrementarIntentoFallido(string L_Usu)
+        {
+            MySqlConnection sqlCon = new MySqlConnection();
+            string mensaje = string.Empty;
+            try
+            {
+                sqlCon = conexion.getInstancia().CrearConcexion();
+                MySqlCommand comando = new MySqlCommand("IncrementarIntentoYSuspender", sqlCon);
+                comando.CommandType = CommandType.StoredProcedure;
+
+                comando.Parameters.Add("p_usuario", MySqlDbType.VarChar).Value = L_Usu;
+
+                MySqlParameter pMensaje = new MySqlParameter("mensaje_salida", MySqlDbType.VarChar);
+                pMensaje.Direction = ParameterDirection.Output;
+                comando.Parameters.Add(pMensaje);
+
+                sqlCon.Open();
+                comando.ExecuteNonQuery();
+
+                if (pMensaje.Value != null && pMensaje.Value != DBNull.Value)
+                {
+                    mensaje = pMensaje.Value.ToString();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+            finally
+            {
+                if (sqlCon.State == ConnectionState.Open)
+                { sqlCon.Close(); }
+            }
+
+            return mensaje;
+        }
+
+        public void MarcarPrimerAccesoCompletado(string L_Usu)
+        {
+            MySqlConnection sqlCon = new MySqlConnection();
+            try
+            {
+                sqlCon = conexion.getInstancia().CrearConcexion();
+                MySqlCommand comando = new MySqlCommand("ActualizarPrimerAcceso", sqlCon);
+                comando.CommandType = CommandType.StoredProcedure;
+
+                comando.Parameters.Add("Usu", MySqlDbType.VarChar).Value = L_Usu;
+
+                sqlCon.Open();
+                comando.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+            finally
+            {
+                if (sqlCon.State == ConnectionState.Open)
+                { sqlCon.Close(); }
+            }
+        }
+    }
+}
